@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.api import routes_vendas
+from app.api import routes_vendas, user
 from app.core.database import Base, engine
 
 # Cria as tabelas no banco
@@ -10,6 +10,7 @@ app = FastAPI(title="API de Agendamento")
 
 # Rotas
 app.include_router(routes_vendas.router)
+app.include_router(user.router)
 
 @app.get("/")
 def root():
