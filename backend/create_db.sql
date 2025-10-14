@@ -26,13 +26,19 @@ CREATE TABLE horarios_de_trabalho (
     observacao TEXT
 );
 
+CREATE TABLE todos_os_horarios (
+    id SERIAL PRIMARY KEY,
+    tatuador_id INT REFERENCES tatuadores(id),
+    horario_id INT REFERENCES horarios_de_trabalho(id)
+);
+
 -- ===========================================
 -- TATUADORES
 -- ===========================================
 CREATE TABLE tatuadores (
     id SERIAL PRIMARY KEY,
     usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    horario_id INT REFERENCES horarios_de_trabalho(id), -- referência ao horário
+    horario_id INT REFERENCES todos_os_horarios(id), -- referência ao horário
     especialidade VARCHAR(255),
     ativo BOOLEAN DEFAULT true
 );

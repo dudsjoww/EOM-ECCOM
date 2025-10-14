@@ -1,19 +1,20 @@
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional,List
+from app.schemas.todos_os_horarios import AllHoursResponse
 
-# Dados básicos (base para os outros)
+# Base - comum a todos
 class TatuadorBase(BaseModel):
-    nome: str
     especialidade: Optional[str] = None
-    horarios_id: Optional[int] = None
+    ativo: Optional[bool] = True
 
-# Dados de criação (input)
+# Schema de criação (entrada)
 class TatuadorCreate(TatuadorBase):
-    pass  # se não houver campos extras no create
+    user_id: int  # FK obrigatória na criação
 
-# Dados de retorno (output)
+# Schema de resposta (saída)
 class TatuadorResponse(TatuadorBase):
     id: int
-
+    user_id: int
+    todos_os_horarios: List[AllHoursResponse] = []
     class Config:
-        from_attributes = True  # antes era orm_mode = True
+        from_attributes = True

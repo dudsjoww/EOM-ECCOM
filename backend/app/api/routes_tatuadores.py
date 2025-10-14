@@ -9,8 +9,7 @@ router = APIRouter(prefix="/tatuadores", tags=["Tatuadores"])
 @router.post("/", response_model=TatuadorResponse)
 def criar_tatuador(tatuador: TatuadorCreate, db: Session = Depends(get_db)):
     novo = Tatuador(
-        usuario_id=tatuador.usuario_id,
-        horario_id=tatuador.horario_id,
+        user_id=tatuador.user_id,
         especialidade=tatuador.especialidade,
         ativo=True
     )
