@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, Depends, HTTPException # pyright: ignore[reportMissingImports]
+from sqlalchemy.orm import Session # type: ignore
 from app.core.database import get_db
 from app.models.todos_os_horarios import TodosOsHorarios
 from app.schemas.todos_os_horarios import TodosOsHorariosResponse, TodosOsHorariosBase

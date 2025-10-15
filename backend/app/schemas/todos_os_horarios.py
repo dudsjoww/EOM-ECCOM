@@ -8,7 +8,6 @@ class TodosOsHorariosBase(BaseModel):
 
 class TodosOsHorariosResponse(TodosOsHorariosBase):
     id: int
-    horario: HorarioResponse  # 👈 inclui o objeto de horário completo
 
     class Config:
         from_attributes = True
