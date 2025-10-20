@@ -20,7 +20,9 @@ CREATE TABLE usuarios (
 -- ===========================================
 CREATE TABLE horarios_de_trabalho (
     id SERIAL PRIMARY KEY,
-    dia_semana VARCHAR(15) NOT NULL, -- 'segunda', 'terça', ...
+    dia_semana VARCHAR(15) CHECK (STATUS IN (
+        'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'
+    )) -- 'segunda', 'terça', ...
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     observacao TEXT
@@ -46,25 +48,32 @@ CREATE TABLE tatuadores (
 -- ===========================================
 -- ESTOQUE
 -- ===========================================
-CREATE TABLE estoque (
+CREATE TABLE estoque(
     id SERIAL PRIMARY KEY,
     nome_item VARCHAR(255) NOT NULL,
     quantidade INT NOT NULL DEFAULT 0,
     custo_unitario NUMERIC(10,2) NOT NULL,
     preco_venda NUMERIC(10,2) DEFAULT NULL,
-    ativo BOOLEAN DEFAULT true
+    ativo BOOLEAN DEFAULT true,
+    marca VARCHAR(100),
+    descricao TEXT,
+    unidade_medida VARCHAR(50),
+    data_registro TIMESTAMP DEFAULT NOW(),
+    passive BOOLEAN DEFAULT false
 );
-
+============================================
 -- Trigger para definir preco_venda = custo_unitario * 1.2 se não informado
-CREATE OR REPLACE FUNCTION set_preco_venda_default()
-RETURNS TRIGGER AS $$
-BEGIN
-    IF NEW.preco_venda IS NULL THEN
-        NEW.preco_venda := NEW.custo_unitario * 1.2;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+-- CREATE OR REPLACE FUNCTION set_preco_venda_default()
+-- RETURNS TRIGGER AS $$
+-- BEGIN
+--     IF NEW.preco_venda IS NULL THEN
+--         NEW.preco_venda := NEW.custo_unitario * 1.2;
+--     END IF;
+--     RETURN NEW;
+-- END;
+-- $$ LANGUAGE plpgsql;
+===========================================
+
 
 CREATE TRIGGER trg_set_preco_venda
 BEFORE INSERT OR UPDATE ON estoque
