@@ -32,7 +32,7 @@ class Pedido(Base):
     status = Column(Enum(StatusPedido), default=StatusPedido.SOLICITADO, nullable=False)
 
     data_agendamento = Column(DateTime, nullable=True)
-    data_criacao = Column(DateTime, default=datetime.utcnow)
+    data_criacao = Column(DateTime, default=datetime.now, nullable=False)
 
     # 🔗 Relacionamentos
     usuario = relationship("User", back_populates="pedidos")

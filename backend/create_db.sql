@@ -16,13 +16,20 @@ CREATE TABLE usuarios (
 );
 
 -- ===========================================
+-- TATUADORES
+-- ===========================================
+CREATE TABLE tatuadores (
+    id SERIAL PRIMARY KEY,
+    usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    especialidade VARCHAR(255),
+    ativo BOOLEAN DEFAULT true
+);
+-- ===========================================
 -- HORÁRIOS DE TRABALHO
 -- ===========================================
 CREATE TABLE horarios_de_trabalho (
     id SERIAL PRIMARY KEY,
-    dia_semana VARCHAR(15) CHECK (STATUS IN (
-        'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB', 'DOM'
-    )) -- 'segunda', 'terça', ...
+    dia_semana VARCHAR(15) CHECK (dia_semana IN ('SEG','TER','QUA','QUI','SEX','SAB','DOM'))
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     observacao TEXT
@@ -34,16 +41,6 @@ CREATE TABLE todos_os_horarios (
     horario_id INT REFERENCES horarios_de_trabalho(id)
 );
 
--- ===========================================
--- TATUADORES
--- ===========================================
-CREATE TABLE tatuadores (
-    id SERIAL PRIMARY KEY,
-    usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    horario_id INT REFERENCES todos_os_horarios(id), -- referência ao horário
-    especialidade VARCHAR(255),
-    ativo BOOLEAN DEFAULT true
-);
 
 -- ===========================================
 -- ESTOQUE
@@ -54,65 +51,24 @@ CREATE TABLE estoque(
     quantidade INT NOT NULL DEFAULT 0,
     custo_unitario NUMERIC(10,2) NOT NULL,
     preco_venda NUMERIC(10,2) DEFAULT NULL,
-    ativo BOOLEAN DEFAULT true,
-    marca VARCHAR(100),
+    marca VARCHAR(50) NOT NULL,
+    unidade_medida VARCHAR(20) NOT NULL,
     descricao TEXT,
-    unidade_medida VARCHAR(50),
-    data_registro TIMESTAMP DEFAULT NOW(),
-    passive BOOLEAN DEFAULT false
+    criado_em TIMESTAMP DEFAULT NOW(),
+    atualizado_em TIMESTAMP DEFAULT NOW(),
+    passivo BOOLEAN DEFAULT false
+    ativo BOOLEAN DEFAULT true,
 );
-============================================
--- Trigger para definir preco_venda = custo_unitario * 1.2 se não informado
--- CREATE OR REPLACE FUNCTION set_preco_venda_default()
--- RETURNS TRIGGER AS $$
--- BEGIN
---     IF NEW.preco_venda IS NULL THEN
---         NEW.preco_venda := NEW.custo_unitario * 1.2;
---     END IF;
---     RETURN NEW;
--- END;
--- $$ LANGUAGE plpgsql;
-===========================================
-
-
-CREATE TRIGGER trg_set_preco_venda
-BEFORE INSERT OR UPDATE ON estoque
-FOR EACH ROW
-EXECUTE FUNCTION set_preco_venda_default();
-
 -- ===========================================
 -- CONSUMÍVEIS (referência ao estoque)
 -- ===========================================
-CREATE TABLE consumiveis (
+CREATE TABLE venda_consumivel(
     id SERIAL PRIMARY KEY,
-    nome VARCHAR(255) NOT NULL,
-    descricao TEXT,
-    preco NUMERIC(10,2) NOT NULL,
-    estoque_id INT NOT NULL REFERENCES estoque(id),
+    item_id INT NOT NULL REFERENCES estoque(id),
+    pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+    quantidade INT NOT NULL,
+    preco_final NUMERIC(10,2) NOT NULL,
     ativo BOOLEAN DEFAULT true
-);
-
--- ===========================================
--- PEDIDOS DE TATUAGEM
--- ===========================================
-CREATE TABLE pedidos (
-    id SERIAL PRIMARY KEY,
-    cliente_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
-    tatuador_id INT REFERENCES tatuadores(id) ON DELETE SET NULL,
-    area_corpo VARCHAR(50) NOT NULL,
-    tamanho VARCHAR(50),
-    imagem_png TEXT,
-    coordenadas JSONB,
-    status VARCHAR(50) DEFAULT 'solicitado' CHECK (status IN (
-        'solicitado',
-        'em_orcamento',
-        'aguardando_cliente',
-        'agendado',
-        'concluido',
-        'cancelado'
-    )),
-    criado_em TIMESTAMP DEFAULT NOW(),
-    atualizado_em TIMESTAMP DEFAULT NOW()
 );
 
 -- ===========================================
@@ -120,24 +76,11 @@ CREATE TABLE pedidos (
 -- ===========================================
 CREATE TABLE orcamentos (
     id SERIAL PRIMARY KEY,
-    pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
-    tatuador_id INT NOT NULL REFERENCES tatuadores(id) ON DELETE CASCADE,
     valor_sessao NUMERIC(10,2) NOT NULL, -- valor base da sessão
     duracao_horas NUMERIC(5,2) DEFAULT 1,
     qtd_sessoes INT DEFAULT 1,
-    observacao TEXT,
     enviado_em TIMESTAMP DEFAULT NOW(),
     confirmado_cliente BOOLEAN DEFAULT false
-);
-
--- ===========================================
--- ITENS USADOS NO ORÇAMENTO (Consumíveis)
--- ===========================================
-CREATE TABLE orcamento_consumiveis (
-    id SERIAL PRIMARY KEY,
-    orcamento_id INT NOT NULL REFERENCES orcamentos(id) ON DELETE CASCADE,
-    estoque_id INT NOT NULL REFERENCES estoque(id) ON DELETE CASCADE,
-    quantidade NUMERIC(10,2) NOT NULL
 );
 
 -- ===========================================
@@ -145,41 +88,42 @@ CREATE TABLE orcamento_consumiveis (
 -- ===========================================
 CREATE TABLE agendamentos (
     id SERIAL PRIMARY KEY,
-    pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
-    tatuador_id INT NOT NULL REFERENCES tatuadores(id) ON DELETE CASCADE,
-    cliente_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     data_agendada DATE NOT NULL,
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     confirmado_cliente BOOLEAN DEFAULT false,
-    compareceu BOOLEAN DEFAULT false,
-    concluido BOOLEAN DEFAULT false,
-    cancelado BOOLEAN DEFAULT false,
     criado_em TIMESTAMP DEFAULT NOW()
 );
-
 -- ===========================================
--- CONSUMO DE ITENS (referencia custo de compra)
+-- PEDIDOS DE VENDA
 -- ===========================================
-CREATE TABLE consumo_itens (
+CREATE TABLE pedidos (
     id SERIAL PRIMARY KEY,
-    pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
-    consumivel_id INT NOT NULL REFERENCES consumiveis(id) ON DELETE CASCADE,
-    quantidade INT NOT NULL,
-    preco_unitario NUMERIC(10,2) NOT NULL,
-    subtotal NUMERIC(10,2) GENERATED ALWAYS AS (quantidade * preco_unitario) STORED
+    cliente_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
+    tatuador_id INT REFERENCES tatuadores(id) ON DELETE SET NULL,
+    area_corpo VARCHAR(50) DEFAULT 'Não escolhido',
+    tamanho VARCHAR(50) DEFAULT 'Não escolhido',
+    imagem_png TEXT,
+    coordenadas JSONB DEFAULT NULL,
+    status VARCHAR(50) DEFAULT 'solicitado' CHECK (status IN (
+        'solicitado', 'em_orcamento', 'resposta_cliente', 'separado',
+        'agendado', 'concluido', 'cancelado'
+    )),
+    agendamento_id INT REFERENCES agendamentos(id) ON DELETE SET NULL,
+    venda_consumivel_id INT REFERENCES venda_consumivel(id) ON DELETE SET NULL,
+    sessao_id INT REFERENCES sessao(id) ON DELETE SET NULL,
+    observacao TEXT,
+    criado_em TIMESTAMP DEFAULT NOW(),
+    atualizado_em TIMESTAMP DEFAULT NOW()
 );
 
--- ===========================================
--- VENDA DE CONSUMÍVEIS (referencia preco_venda)
--- ===========================================
-CREATE TABLE venda_consumiveis (
+CREATE TABLE sessao(
     id SERIAL PRIMARY KEY,
-    pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
-    consumivel_id INT NOT NULL REFERENCES consumiveis(id) ON DELETE CASCADE,
-    quantidade INT NOT NULL,
-    preco_unitario NUMERIC(10,2) NOT NULL DEFAULT 0,
-    subtotal NUMERIC(10,2) GENERATED ALWAYS AS (quantidade * preco_unitario) STORED
+    orcamento_id INT NOT NULL REFERENCES orcamentos(id) ON DELETE CASCADE,
+    data_sessao DATE NOT NULL,
+    hora_inicio TIME NOT NULL,
+    hora_fim TIME NOT NULL,
+    observacao TEXT
 );
 
 -- ===========================================
@@ -190,22 +134,9 @@ CREATE TABLE pagamentos (
     pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
     valor_total NUMERIC(10,2) NOT NULL,
     metodo_pagamento VARCHAR(50) DEFAULT 'presencial',
+    feedback_cliente TEXT,
+    nota_cliente INT CHECK (nota_cliente BETWEEN 1 AND 5),
+    origem_cliente VARCHAR(100),
     confirmado BOOLEAN DEFAULT false,
     data_pagamento TIMESTAMP
 );
-
--- ===========================================
--- TRIGGER PARA ATUALIZAR DATA DE MODIFICAÇÃO EM PEDIDOS
--- ===========================================
-CREATE OR REPLACE FUNCTION atualizar_data_pedido()
-RETURNS TRIGGER AS $$
-BEGIN
-    NEW.atualizado_em = NOW();
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER trg_pedido_update
-BEFORE UPDATE ON pedidos
-FOR EACH ROW
-EXECUTE FUNCTION atualizar_data_pedido();
