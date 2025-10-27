@@ -23,6 +23,9 @@ CREATE TABLE tatuadores (
     usuario_id INT NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE,
     especialidade VARCHAR(255),
     ativo BOOLEAN DEFAULT true
+    capacidade_diaria INT, -- quantas sessões o tatuador faz por dia
+    preferencia_turno VARCHAR(10) CHECK (preferencia_turno IN ('manha','tarde','noite'))
+
 );
 -- ===========================================
 -- HORÁRIOS DE TRABALHO
@@ -124,6 +127,7 @@ CREATE TABLE sessao(
     hora_inicio TIME NOT NULL,
     hora_fim TIME NOT NULL,
     observacao TEXT
+    CONSTRAINT sessao_orcamento_unique UNIQUE (orcamento_id, data_sessao)
 );
 
 -- ===========================================
