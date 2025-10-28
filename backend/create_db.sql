@@ -68,7 +68,7 @@ CREATE TABLE estoque(
 CREATE TABLE venda_consumivel(
     id SERIAL PRIMARY KEY,
     item_id INT NOT NULL REFERENCES estoque(id),
-    pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+    pedido_id INT NOT NULL REFERENCES pedidos(id) ON DELETE NULL,
     quantidade INT NOT NULL,
     preco_final NUMERIC(10,2) NOT NULL,
     ativo BOOLEAN DEFAULT true
@@ -113,7 +113,6 @@ CREATE TABLE pedidos (
         'agendado', 'concluido', 'cancelado'
     )),
     agendamento_id INT REFERENCES agendamentos(id) ON DELETE SET NULL,
-    venda_consumivel_id INT REFERENCES venda_consumivel(id) ON DELETE SET NULL,
     sessao_id INT REFERENCES sessao(id) ON DELETE SET NULL,
     observacao TEXT,
     criado_em TIMESTAMP DEFAULT NOW(),
