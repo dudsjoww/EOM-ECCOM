@@ -51,6 +51,10 @@ def deletar_usuario(user_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{user_id}", response_model=UserResponse)
 def atualizar_usuario(user_id: int, usuario: UserCreate, db: Session = Depends(get_db)):
+    try:
+        resultado = db.query(User).all()
+    except Exception as e:
+        print("Erro ao consultar tabela:", e)
     usuario_db = db.query(User).filter(User.id == user_id).first()
     if not usuario_db:
         raise HTTPException(status_code=404, detail="Usuário não encontrado")

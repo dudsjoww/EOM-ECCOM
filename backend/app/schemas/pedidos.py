@@ -32,11 +32,11 @@ class PedidoResponse(PedidoBase):
     id: int
     usuario_id: int
     tatuador_id: Optional[int]
-    custo_base: Optional[float]
-    valor_total: Optional[float]
+    agendamento_id: Optional[int]
+    sessao_id: Optional[int]
     status: StatusPedido
-    data_agendamento: Optional[datetime]
-    data_criacao: datetime
+    criado_em: datetime
+    atualizado_em: datetime
 
     class Config:
         from_attributes = True  # substitui orm_mode

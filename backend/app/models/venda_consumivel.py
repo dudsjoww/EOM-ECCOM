@@ -12,6 +12,5 @@ class Venda_Consumivel(Base):
     pedidos_id = Column(Integer, ForeignKey("pedidos.id"))
     item_id = Column(Integer, ForeignKey("estoque.id"))
 
-
-pedidos = relationship("Pedido", back_populates="venda_consumivel")
-estoque = relationship("Estoque", back_populates="venda_consumivel")
+    pedidos = relationship("Pedido", back_populates="venda_consumivel")
+    estoque = relationship("Estoque", back_populates="venda_consumivel")

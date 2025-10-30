@@ -9,7 +9,7 @@ router = APIRouter(prefix="/estoque", tags=["estoque"])
 
 
 @router.post("/", response_model=EstoqueResponse)
-def criar_horario(EstoqueSchema: EstoqueCreate, db: Session = Depends(get_db)):
+def criar_item(EstoqueSchema: EstoqueCreate, db: Session = Depends(get_db)):
     novo = Estoque(
         nome_item=EstoqueSchema.nome_item,
         quantidade=EstoqueSchema.quantidade,
@@ -34,12 +34,12 @@ def criar_horario(EstoqueSchema: EstoqueCreate, db: Session = Depends(get_db)):
 
 
 @router.get("/", response_model=list[EstoqueResponse])
-def listar_horarios(db: Session = Depends(get_db)):
+def listar_itens(db: Session = Depends(get_db)):
     return db.query(Estoque).all()
 
 
 @router.get("/{estoque_id}", response_model=EstoqueResponse)
-def obter_horario(estoque_id: int, db: Session = Depends(get_db)):
+def obter_item(estoque_id: int, db: Session = Depends(get_db)):
     estoque = db.query(Estoque).filter(Estoque.id == estoque_id).first()
     if not estoque:
         raise HTTPException(status_code=404, detail="Item do estoque não encontrado")
@@ -47,7 +47,7 @@ def obter_horario(estoque_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("/{estoque_id}", response_model=dict)
-def deletar_horario(estoque_id: int, db: Session = Depends(get_db)):
+def deletar_item(estoque_id: int, db: Session = Depends(get_db)):
     estoque = db.query(Estoque).filter(Estoque.id == estoque_id).first()
     if not estoque:
         raise HTTPException(status_code=404, detail="Item do estoque não encontrado")
@@ -58,7 +58,7 @@ def deletar_horario(estoque_id: int, db: Session = Depends(get_db)):
 
 
 @router.put("/{estoque_id}", response_model=EstoqueResponse)
-def atualizar_horario(
+def atualizar_item(
     estoque_id: int, EstoqueSchema: EstoqueCreate, db: Session = Depends(get_db)
 ):
     estoque = db.query(Estoque).filter(Estoque.id == estoque_id).first()

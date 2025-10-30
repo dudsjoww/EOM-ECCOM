@@ -1,4 +1,16 @@
-from sqlalchemy import Column, Integer, String, Float, ForeignKey, DateTime, Enum, Text, Date, Time, Boolean
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Float,
+    ForeignKey,
+    DateTime,
+    Enum,
+    Text,
+    Date,
+    Time,
+    Boolean,
+)
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 import enum
@@ -16,4 +28,4 @@ class Agendamentos(Base):
     criado_em = Column(DateTime, default=datetime.now, nullable=False)
 
     # 🔗 Relacionamentos
-    pedido = relationship("Pedido", back_populates="agendamento")
+    pedidos = relationship("Pedido", back_populates="agendamento")
