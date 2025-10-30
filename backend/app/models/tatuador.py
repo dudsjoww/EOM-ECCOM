@@ -7,17 +7,17 @@ class Tatuador(Base):
     __tablename__ = "tatuadores"
 
     id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.id"))
+    usuario_id = Column(Integer, ForeignKey("usuarios.id"))
     especialidade = Column(String)
-    ativo = Column(Boolean, default=True)  # 1 para ativo, 0 para inativo
+    ativo = Column(Boolean, default=True)
+    capacidade_diaria = Column(Integer, default=5)
+    preferencia_turno = Column(String, nullable=True)  # manhã, tarde, noite
 
     # relacionamento com horários de trabalho
-    todos_os_horarios = relationship(
-        "TodosOsHorarios", back_populates="tatuador", cascade="all, delete-orphan"
-    )
+    todos_os_horarios = relationship("TodosOsHorarios", back_populates="tatuador")
 
     # relacionamento com usuario
-    usuario = relationship("User", back_populates="tatuador")
+    usuario = relationship("User", back_populates="tatuador", uselist=False)
 
     # relacionamento com pedidos
-    pedidos = relationship("Pedido", back_populates="tatuador")
+    # pedidos = relationship("Pedido", back_populates="tatuador")
