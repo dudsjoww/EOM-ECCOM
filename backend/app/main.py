@@ -9,11 +9,8 @@ from app.api import (
     routes_agendamentos,
     routes_venda_consumivel,
     routes_orcamentos,
-    routes_sessao
+    routes_sessao,
 )
-from app.core.database import Base, engine
-
-Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Soyve Tattoo API")
 
