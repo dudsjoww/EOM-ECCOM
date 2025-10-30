@@ -6,18 +6,52 @@ from app.schemas.tatuador import TatuadorCreate, TatuadorResponse
 
 router = APIRouter(prefix="/tatuadores", tags=["Tatuadores"])
 
+
 @router.post("/", response_model=TatuadorResponse)
 def criar_tatuador(tatuador: TatuadorCreate, db: Session = Depends(get_db)):
     novo = Tatuador(
-        user_id=tatuador.user_id,
-        especialidade=tatuador.especialidade,
-        ativo=True
+        user_id=tatuador.user_id, especialidade=tatuador.especialidade, ativo=True
     )
     db.add(novo)
     db.commit()
     db.refresh(novo)
     return novo
 
+
 @router.get("/", response_model=list[TatuadorResponse])
 def listar_tatuadores(db: Session = Depends(get_db)):
     return db.query(Tatuador).all()
+
+
+@router.get("/{tatuador_id}", response_model=TatuadorResponse)
+def obter_tatuador(tatuador_id: int, db: Session = Depends(get_db)):
+    tatuador = db.query(Tatuador).filter(Tatuador.id == tatuador_id).first()
+    if not tatuador:
+        raise HTTPException(status_code=404, detail="Tatuador não encontrado")
+    return tatuador
+
+
+@router.delete("/{tatuador_id}", response_model=dict)
+def deletar_tatuador(tatuador_id: int, db: Session = Depends(get_db)):
+    tatuador = db.query(Tatuador).filter(Tatuador.id == tatuador_id).first()
+    if not tatuador:
+        raise HTTPException(status_code=404, detail="Tatuador não encontrado")
+    else:
+        db.delete(tatuador)
+        db.commit()
+        return {"detail": "Tatuador deletado com sucesso"}
+
+
+@router.put("/{tatuador_id}", response_model=TatuadorResponse)
+def atualizar_tatuador(
+    tatuador_id: int, tatuador: TatuadorCreate, db: Session = Depends(get_db)
+):
+    tatuador_db = db.query(Tatuador).filter(Tatuador.id == tatuador_id).first()
+    if not tatuador_db:
+        raise HTTPException(status_code=404, detail="Tatuador não encontrado")
+    else:
+        tatuador_db.user_id = tatuador.user_id
+        tatuador_db.especialidade = tatuador.especialidade
+        db.commit()
+        db.refresh(tatuador_db)
+        return tatuador_db

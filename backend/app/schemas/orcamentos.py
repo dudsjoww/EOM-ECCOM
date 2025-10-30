@@ -1,10 +1,11 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Optional
 
 
 class OrcamentoBase(BaseModel):
     valor_sessao: float
     duracao_horas: float
     qtd_sessoes: int
+    confirmado_cliente: Optional[bool] = False
 
 
 class OrcamentoCreate(OrcamentoBase):
@@ -14,7 +15,6 @@ class OrcamentoCreate(OrcamentoBase):
 class OrcamentoResponse(OrcamentoBase):
     id: int
     enviado_em: str
-    confirmado_cliente: bool
 
     class Config:
         from_attributes = True  # substitui orm_mode

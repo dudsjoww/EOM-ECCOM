@@ -1,10 +1,9 @@
 from sqlalchemy import Column, Integer, Float, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from app.core.database import Base
-import enum
 
 
-class orcamentos(Base):
+class Orcamentos(Base):
     __tablename__ = "orcamentos"
     id = Column(Integer, primary_key=True, index=True)
 
