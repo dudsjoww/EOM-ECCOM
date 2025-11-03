@@ -44,7 +44,7 @@ class Pedido(Base):
     agendamento = relationship(
         "Agendamentos", back_populates="pedidos", uselist=False
     )  # um-para-um
-    sessao = relationship("Sessao", back_populates="pedidos")
+    # sessao = relationship("Sessao", back_populates="pedidos")
     venda_consumivel = relationship(
         "Venda_Consumivel", back_populates="pedidos"
     )  # um-para-muitos

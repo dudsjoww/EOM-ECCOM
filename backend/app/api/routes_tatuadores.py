@@ -51,6 +51,7 @@ def deletar_tatuador(tatuador_id: int, db: Session = Depends(get_db)):
     else:
         db.delete(tatuador)
         db.commit()
+        db.expire_all()
         return {"detail": "Tatuador deletado com sucesso"}
 
 

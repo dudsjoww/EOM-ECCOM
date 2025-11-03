@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.orcamentos import Orcamentos
 from app.schemas.orcamentos import OrcamentoCreate, OrcamentoResponse
+from datetime import datetime
 
 router = APIRouter(prefix="/orcamentos", tags=["Orcamentos"])
 
@@ -14,6 +15,7 @@ def criar_orcamento(OrcamentoSchema: OrcamentoCreate, db: Session = Depends(get_
         duracao_horas=OrcamentoSchema.duracao_horas,
         qtd_sessoes=OrcamentoSchema.qtd_sessoes,
         confirmado_cliente=OrcamentoSchema.confirmado_cliente,
+        enviado_em=datetime.now(),
     )
     db.add(novo)
     db.commit()

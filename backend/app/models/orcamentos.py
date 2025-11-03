@@ -1,6 +1,7 @@
-from sqlalchemy import Column, Integer, Float, DateTime, Boolean
+from sqlalchemy import Column, Integer, Float, DateTime, Boolean, Time
 from sqlalchemy.orm import relationship
 from app.core.database import Base
+from datetime import datetime
 
 
 class Orcamentos(Base):
@@ -8,9 +9,9 @@ class Orcamentos(Base):
     id = Column(Integer, primary_key=True, index=True)
 
     valor_sessao = Column(Float, nullable=False)
-    duracao_horas = Column(Float, nullable=False)
+    duracao_horas = Column(Time, nullable=False)
     qtd_sessoes = Column(Integer, nullable=False)
-    enviado_em = Column(DateTime, nullable=False)
+    enviado_em = Column(DateTime, nullable=False, default=datetime.now)
     confirmado_cliente = Column(Boolean, default=False)
 
     sessao = relationship("Sessao", back_populates="orcamentos")

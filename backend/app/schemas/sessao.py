@@ -4,15 +4,16 @@ from datetime import date, time
 
 
 class SessaoBase(BaseModel):
-    duracao_horas: float
+    duracao_horas: time
     data_sessao: date
     hora_inicio: time
     hora_fim: time
-    observacaoes: Optional[str] = None
+    orcamento_id: Optional[int]
+    observacao: Optional[str] = None
 
 
 class SessaoCreate(SessaoBase):
-    pass
+    orcamento_id: int
 
 
 class SessaoResponse(SessaoBase):
