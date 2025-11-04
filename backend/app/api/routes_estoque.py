@@ -2,10 +2,15 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.estoque import Estoque
-from app.schemas.estoque import EstoqueCreate, EstoqueResponse
+from app.schemas.estoque import EstoqueCreate, EstoqueResponse, EstoqueUpdate
 from datetime import datetime
 
 router = APIRouter(prefix="/estoque", tags=["estoque"])
+
+
+# Validação básica, como se o item já existe da mesma marca
+# TODO: Adicionar Constraint no banco para marca x nome_item unico
+# TODO: Validar campos numéricos (quantidade, custo_unitario, preco_venda) para não aceitar valores negativos
 
 
 @router.post("/", response_model=EstoqueResponse)
@@ -16,10 +21,12 @@ def criar_item(EstoqueSchema: EstoqueCreate, db: Session = Depends(get_db)):
         custo_unitario=EstoqueSchema.custo_unitario,
         preco_venda=EstoqueSchema.preco_venda,
         ativo=EstoqueSchema.ativo,
-        passive=EstoqueSchema.passive,
+        passivo=EstoqueSchema.passivo,
         marca=EstoqueSchema.marca,
         descricao=EstoqueSchema.descricao,
         unidade_medida=EstoqueSchema.unidade_medida,
+        criado_em=datetime.now(),
+        atualizado_em=datetime.now(),
     )
     try:
         db.add(novo)
@@ -59,7 +66,7 @@ def deletar_item(estoque_id: int, db: Session = Depends(get_db)):
 
 @router.put("/{estoque_id}", response_model=EstoqueResponse)
 def atualizar_item(
-    estoque_id: int, EstoqueSchema: EstoqueCreate, db: Session = Depends(get_db)
+    estoque_id: int, EstoqueSchema: EstoqueUpdate, db: Session = Depends(get_db)
 ):
     estoque = db.query(Estoque).filter(Estoque.id == estoque_id).first()
     if not estoque:
@@ -70,10 +77,11 @@ def atualizar_item(
         estoque.custo_unitario = EstoqueSchema.custo_unitario
         estoque.preco_venda = EstoqueSchema.preco_venda
         estoque.ativo = EstoqueSchema.ativo
-        estoque.passive = EstoqueSchema.passive
+        estoque.passivo = EstoqueSchema.passivo
         estoque.marca = EstoqueSchema.marca
         estoque.descricao = EstoqueSchema.descricao
         estoque.unidade_medida = EstoqueSchema.unidade_medida
+        estoque.atualizado_em = datetime.now()
 
         try:
             db.commit()
@@ -84,4 +92,3 @@ def atualizar_item(
             raise HTTPException(
                 status_code=400, detail=f"Erro ao atualizar item do estoque: {str(e)}"
             )
-    return estoque

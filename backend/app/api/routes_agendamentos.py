@@ -2,7 +2,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.agendamentos import Agendamentos
-from app.schemas.agendamentos import AgendamentoCreate, AgendamentoResponse
+from app.schemas.agendamentos import (
+    AgendamentoCreate,
+    AgendamentoResponse,
+    AgendamentoConfirmClient,
+)
 
 router = APIRouter(prefix="/agendamentos", tags=["Agendamentos"])
 
@@ -14,6 +18,7 @@ def criar_pedido(AgendamentoSchema: AgendamentoCreate, db: Session = Depends(get
         hora_inicio=AgendamentoSchema.hora_inicio,
         hora_fim=AgendamentoSchema.hora_fim,
         confirmado_cliente=AgendamentoSchema.confirmado_cliente,
+        observacao=AgendamentoSchema.observacao,
     )
     db.add(novo)
     db.commit()
@@ -64,6 +69,26 @@ def atualizar_agendamento(
         agendamento.data_agendada = AgendamentoSchema.data_agendada
         agendamento.hora_inicio = AgendamentoSchema.hora_inicio
         agendamento.hora_fim = AgendamentoSchema.hora_fim
+        agendamento.confirmado_cliente = AgendamentoSchema.confirmado_cliente
+        agendamento.observacao = AgendamentoSchema.observacao
+
+        db.commit()
+        db.refresh(agendamento)
+        return agendamento
+
+
+@router.put("/confirm/{agendamento_id}", response_model=AgendamentoResponse)
+def confirmar_cliente(
+    agendamento_id: int,
+    AgendamentoSchema: AgendamentoConfirmClient,
+    db: Session = Depends(get_db),
+):
+    agendamento = (
+        db.query(Agendamentos).filter(Agendamentos.id == agendamento_id).first()
+    )
+    if not agendamento:
+        raise HTTPException(status_code=404, detail="Agendamento não encontrado")
+    else:
         agendamento.confirmado_cliente = AgendamentoSchema.confirmado_cliente
 
         db.commit()

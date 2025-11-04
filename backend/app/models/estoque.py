@@ -13,11 +13,12 @@ class Estoque(Base):
     custo_unitario = Column(String, nullable=False)
     preco_venda = Column(String)
     ativo = Column(Boolean, default=True)  # 1 para ativo, 0 para inativo
-    passive = Column(Boolean, default=False)  # 1 para ativo, 0 para inativo
+    passivo = Column(Boolean, default=False)  # 1 para ativo, 0 para inativo
     marca = Column(String(100))
     descricao = Column(String)
     # TODO definir tamanho adequado para unidade_medida, dependendo do uso
     unidade_medida = Column(String(50))
-    data_registro = Column(Date, default=datetime.now())
+    criado_em = Column(Date, default=datetime.now())
+    atualizado_em = Column(Date, default=datetime.now(), onupdate=datetime.now())
 
     venda_consumivel = relationship("Venda_Consumivel", back_populates="estoque")

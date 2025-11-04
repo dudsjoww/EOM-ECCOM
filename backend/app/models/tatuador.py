@@ -20,4 +20,4 @@ class Tatuador(Base):
     usuario = relationship("User", back_populates="tatuador", uselist=False)
 
     # relacionamento com pedidos
-    # pedidos = relationship("Pedido", back_populates="tatuador")
+    pedidos = relationship("Pedido", back_populates="tatuador")

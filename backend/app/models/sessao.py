@@ -16,4 +16,4 @@ class Sessao(Base):
     orcamentos = relationship("Orcamentos", back_populates="sessao")
 
 
-#    pedidos = relationship("Pedido", back_populates="sessao")
+    pedidos = relationship("Pedido", back_populates="sessao")

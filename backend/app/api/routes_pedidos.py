@@ -11,13 +11,16 @@ router = APIRouter(prefix="/pedidos", tags=["Pedidos"])
 @router.post("/", response_model=PedidoResponse)
 def criar_pedido(pedido: PedidoCreate, db: Session = Depends(get_db)):
     novo = Pedido(
-        cliente_id=pedido.cliente_id,
+        usuario_id=pedido.usuario_id,
         tatuador_id=pedido.tatuador_id,
         area_corpo=pedido.area_corpo,
         tamanho=pedido.tamanho,
         imagem_png=pedido.imagem_png,
         coordenadas=pedido.coordenadas,
-        status="solicitado",
+        status=pedido.status,
+        observacao=pedido.observacao,
+        agendamento_id=pedido.agendamento_id,
+        sessao_id=pedido.sessao_id,
     )
     db.add(novo)
     db.commit()
@@ -57,12 +60,17 @@ def atualizar_pedido(
     if not pedido_db:
         raise HTTPException(status_code=404, detail="Pedido não encontrado")
     else:
-        pedido_db.cliente_id = pedido.cliente_id
+        pedido_db.sessao_id = pedido.sessao_id
+        pedido_db.usuario_id = pedido.usuario_id
         pedido_db.tatuador_id = pedido.tatuador_id
         pedido_db.area_corpo = pedido.area_corpo
         pedido_db.tamanho = pedido.tamanho
         pedido_db.imagem_png = pedido.imagem_png
         pedido_db.coordenadas = pedido.coordenadas
+        pedido_db.status = pedido.status
+        pedido_db.observacao = pedido.observacao
+        pedido_db.agendamento_id = pedido.agendamento_id
+
         db.commit()
         db.refresh(pedido_db)
         return pedido_db

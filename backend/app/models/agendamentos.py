@@ -26,6 +26,7 @@ class Agendamentos(Base):
     hora_inicio = Column(Time, nullable=True)
     confirmado_cliente = Column(Boolean, default=False)
     criado_em = Column(DateTime, default=datetime.now, nullable=False)
+    observacao = Column(Text, nullable=True)
 
     # 🔗 Relacionamentos
     pedidos = relationship("Pedido", back_populates="agendamento")

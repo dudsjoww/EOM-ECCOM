@@ -3,6 +3,13 @@ from typing import Optional
 from datetime import datetime
 from enum import Enum
 
+from typing import List
+from app.schemas.sessao import SessaoResponse
+from app.schemas.agendamentos import AgendamentoResponse
+from app.schemas.user import UserResponse
+from app.schemas.tatuador import TatuadorResponse
+from app.schemas.venda_consumivel import VendaConsumivelResponse
+
 
 class StatusPedido(str, Enum):
     SOLICITADO = "solicitado"
@@ -15,28 +22,34 @@ class StatusPedido(str, Enum):
 
 # 🔹 Base comum
 class PedidoBase(BaseModel):
-    local_tatuagem: str
-    tamanho_cm: Optional[float] = None
+    area_corpo: Optional[str] = None
+    tamanho: Optional[str] = None
     imagem_png: Optional[str] = None
     coordenadas: Optional[str] = None
+    status: Optional[StatusPedido] = StatusPedido.SOLICITADO
+    usuario_id: int
+    tatuador_id: Optional[int] = None
+    observacao: Optional[str] = None
+    agendamento_id: Optional[int] = None
+    sessao_id: Optional[int] = None
 
 
 # 🔹 Para criação
 class PedidoCreate(PedidoBase):
-    usuario_id: int
-    tatuador_id: Optional[int] = None
+    pass
 
 
 # 🔹 Retorno da API
 class PedidoResponse(PedidoBase):
     id: int
-    usuario_id: int
-    tatuador_id: Optional[int]
-    agendamento_id: Optional[int]
-    sessao_id: Optional[int]
-    status: StatusPedido
+
     criado_em: datetime
     atualizado_em: datetime
+    sessao: Optional[SessaoResponse] = []
+    agendamento: Optional[AgendamentoResponse] = "Não agendado"
+    usuario: UserResponse
+    tatuador: Optional[TatuadorResponse] = None
+    venda_consumivel: Optional[List[VendaConsumivelResponse]] = []
 
     class Config:
         from_attributes = True  # substitui orm_mode
