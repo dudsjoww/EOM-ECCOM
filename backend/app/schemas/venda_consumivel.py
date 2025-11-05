@@ -1,10 +1,11 @@
 from pydantic import BaseModel
+from typing import Optional
 
 
 class VendaConsumivelBase(BaseModel):
     item_id: int
     quantidade: int
-    preco_final: int
+    preco_final: Optional[float] = None
     pedidos_id: int
 
 

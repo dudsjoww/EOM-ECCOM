@@ -1,5 +1,5 @@
 from sqlalchemy.orm import relationship
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Float
 from app.core.database import Base
 # from app.models.pedidos import Pedido  # ⚠️ precisa existir
 
@@ -8,7 +8,7 @@ class Venda_Consumivel(Base):
     __tablename__ = "venda_consumivel"
     id = Column(Integer, primary_key=True, index=True)
     quantidade = Column(Integer)
-    preco_final = Column(Integer)
+    preco_final = Column(Float)
     pedidos_id = Column(Integer, ForeignKey("pedidos.id"))
     item_id = Column(Integer, ForeignKey("estoque.id"))
 
