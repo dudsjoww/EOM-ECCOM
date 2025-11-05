@@ -15,7 +15,7 @@ class EstoqueBase(BaseModel):
     descricao: Optional[str] = None
     unidade_medida: str = None
 
-    @field_validator("preco_venda", mode="before")
+    @field_validator("preco_venda", mode="after")
     def calcular_preco_venda(cls, v, info):
         # Se o preço de venda não for informado, calcular com base no custo
         if v is None:

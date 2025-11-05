@@ -15,6 +15,21 @@ router = APIRouter(prefix="/estoque", tags=["estoque"])
 
 @router.post("/", response_model=EstoqueResponse)
 def criar_item(EstoqueSchema: EstoqueCreate, db: Session = Depends(get_db)):
+    if EstoqueSchema.quantidade < 0:
+        raise HTTPException(status_code=400, detail="Quantidade não pode ser negativa")
+    elif EstoqueSchema.custo_unitario < 0:
+        raise HTTPException(
+            status_code=400, detail="Custo unitário não pode ser negativo"
+        )
+    elif EstoqueSchema.preco_venda is not None and EstoqueSchema.preco_venda < 0:
+        raise HTTPException(
+            status_code=400, detail="Preço de venda não pode ser negativo"
+        )
+    elif EstoqueSchema.preco_venda is None:
+        EstoqueSchema.preco_venda = round(
+            EstoqueSchema.custo_unitario * 1.2, 2
+        )  # margem de 20%
+
     novo = Estoque(
         nome_item=EstoqueSchema.nome_item,
         quantidade=EstoqueSchema.quantidade,

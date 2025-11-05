@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, Date
+from sqlalchemy import Column, Integer, String, Boolean, Date, Float
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 from datetime import datetime
@@ -10,8 +10,8 @@ class Estoque(Base):
     id = Column(Integer, primary_key=True, index=True)
     nome_item = Column(String, nullable=False)
     quantidade = Column(String, nullable=False)
-    custo_unitario = Column(String, nullable=False)
-    preco_venda = Column(String)
+    custo_unitario = Column(Float, nullable=False)
+    preco_venda = Column(Float)
     ativo = Column(Boolean, default=True)  # 1 para ativo, 0 para inativo
     passivo = Column(Boolean, default=False)  # 1 para ativo, 0 para inativo
     marca = Column(String(100))
