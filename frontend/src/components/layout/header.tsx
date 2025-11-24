@@ -1,11 +1,36 @@
 "use client"
 import { useState } from "react"
+import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Menu, User } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
+
 
 export default function Header() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const router = useRouter();
+  const pathname = usePathname();
+
+
+  function scrollOrGoHome() {
+        // Se já estiver na home
+        if (pathname === "/") {
+            const section = document.getElementById("sectionArtist");
+
+            if (section) {
+                section.scrollIntoView({ behavior: "smooth" });
+            } else {
+                // A home está renderizada mas ainda não existe a section
+                console.warn("sectionArtist não encontrada");
+            }
+
+            return;
+        }
+
+        // Se NÃO estiver na Home → redireciona
+        router.push("/");
+    }
+
 
   return (
     <header className="w-full bg-black text-white shadow-lg border-b border-red-700">
@@ -13,15 +38,13 @@ export default function Header() {
         {/* LOGO */}
         <div className="flex items-center gap-2">
           <div className="w-8 h-8 bg-red-600 rounded-full" />
-          <span className="font-bold text-lg tracking-wide">INK Master</span>
+          <span className="font-bold text-lg tracking-wide">Toca do Coelho</span>
         </div>
 
         {/* MENU */}
         <nav className="hidden md:flex items-center gap-6">
           <a href="#" className="hover:text-red-500 transition">Início</a>
-          <Link href="{#sectionArtist}">
-            <p className="hover:text-red-500 transition">Artistas</p>
-          </Link>
+          <a className="hover:text-red-500 transition" onClick={scrollOrGoHome}>Artistas</a>
           <a href="#" className="hover:text-red-500 transition">Agendamentos</a>
           <a href="#" className="hover:text-red-500 transition">Contato</a>
         </nav>

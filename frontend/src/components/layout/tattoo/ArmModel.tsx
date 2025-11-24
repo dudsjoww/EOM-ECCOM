@@ -25,7 +25,7 @@ export function ArmModel({
 }: ArmModelProps) {
     // const obj = useLoader(OBJLoader, "/models/arm.obj");
     // const obj = useLoader(FBXLoader, "/models/arm.fbx");
-    const obj = useLoader(GLTFLoader, "/models/arm.gltf");
+    const obj = useLoader(GLTFLoader, "/models/lowpoly_arm/arm.gltf");
 
     useEffect(() => {
         if (!obj) return;
@@ -42,7 +42,7 @@ export function ArmModel({
 
     return (
         <primitive
-            object={obj.scene}
+            object={obj.scene || obj}
             scale={scale}
             position={position}
             rotation={rotation}
