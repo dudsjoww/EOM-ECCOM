@@ -1,47 +1,39 @@
-"use client";
+// "use client";
 
-import { Canvas, useLoader } from "@react-three/fiber";
-import { Environment } from "@react-three/drei";
-import { OrbitControls } from "@react-three/drei";
-import { ArmModel } from "../tattoo/ArmModel";
-import * as THREE from "three";
+// import { Canvas, useLoader } from "@react-three/fiber";
+// import { Environment } from "@react-three/drei";
+// import { OrbitControls } from "@react-three/drei";
+// import { ArmModel } from "../tattoo/ArmModel";
+// import * as THREE from "three";
+// import { DecalController } from "../tattoo/DecalController";
+// import { useState } from "react";
 
-export function CanvasTattoo({ imageURL }: { imageURL: string | null }) {
-    return (
-        <Canvas camera={{ position: [0, 1.8, 6], fov: 45 }}>
-            <ambientLight intensity={0.6} />
-            <directionalLight position={[5, 5, 5]} intensity={1} />
+// export function CanvasTattoo({ imageURL }: { imageURL: string | null }) {
+//     const [armMesh, setArmMesh] = useState<THREE.Mesh | null>(null);
 
-            <ArmModel />
+//     const [scale, setScale] = useState(0.6); const [rotation, setRotation] = useState(0);
 
-            {imageURL && <TattooPlane imageURL={imageURL} />}
+//     return (
+//         <Canvas camera={{ position: [0, 1.8, 6], fov: 45 }}>
+//             <ambientLight intensity={0.6} />
+//             <directionalLight position={[5, 5, 5]} intensity={1} />
 
-            <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -1.3, 0]}>
-                <circleGeometry args={[3, 64]} />
-                <meshStandardMaterial color="#222" />
-            </mesh>
+//             <ArmModel onMeshReady={setArmMesh} />
 
-            <OrbitControls
-                enablePan={false}
-                enableZoom={true}
-                minDistance={2}
-                maxDistance={8}
-                zoomSpeed={0.6}
-            />
+//             {armMesh && imageURL && (
+//                 <DecalController armMesh={armMesh} imageURL={imageURL} />
+//             )}
 
-            <Environment preset="studio" />
-        </Canvas>
+//             <OrbitControls
+//                 enablePan={false}
+//                 enableZoom={true}
+//                 minDistance={2}
+//                 maxDistance={8}
+//                 zoomSpeed={0.6}
+//             />
 
-    );
-}
+//             <Environment preset="studio" />
+//         </Canvas>
+//     );
+// }
 
-function TattooPlane({ imageURL }: { imageURL: string }) {
-    const texture = useLoader(THREE.TextureLoader, imageURL);
-
-    return (
-        <mesh>
-            <planeGeometry args={[2, 2]} />
-            <meshBasicMaterial map={texture} toneMapped={false} />
-        </mesh>
-    );
-}
