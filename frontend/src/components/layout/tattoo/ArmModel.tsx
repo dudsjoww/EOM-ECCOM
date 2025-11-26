@@ -18,14 +18,25 @@ export function ArmModel({
     // scale = 0.02,
     // position = [0, 0, 0],
     // rotation = [5, 19, 4],
-    scale = 1,
-    position = [7, -10, -15],
+    // low poly arm
+    // scale = 1,
+    // position = [7, -10, -15],
+    // rotation = [0, 0, 0],
+    // high res arm 
+    // scale = 0.5,
+    // position = [220, 0, 155],
+    // rotation = [0, 0, 0],
+    // strong arm
+    scale = 5,
+    position = [0, 0, 0],
     rotation = [0, 0, 0],
     onMeshReady,
 }: ArmModelProps) {
     // const obj = useLoader(OBJLoader, "/models/arm.obj");
     // const obj = useLoader(FBXLoader, "/models/arm.fbx");
-    const obj = useLoader(GLTFLoader, "/models/lowpoly_arm/arm.gltf");
+    // const obj = useLoader(GLTFLoader, "/models/lowpoly_arm/arm.gltf");
+    // const obj = useLoader(GLTFLoader, "/models/highres_arm/scene.gltf");
+    const obj = useLoader(GLTFLoader, "/models/strong_arm/scene.gltf");
 
     useEffect(() => {
         if (!obj) return;
@@ -37,9 +48,10 @@ export function ArmModel({
 
         if (mesh && onMeshReady) {
             onMeshReady(mesh);
+            mesh.geometry = mesh.geometry.toNonIndexed();
+            mesh.geometry.computeVertexNormals();
         }
     }, [obj, onMeshReady]);
-
     return (
         <primitive
             object={obj.scene || obj}

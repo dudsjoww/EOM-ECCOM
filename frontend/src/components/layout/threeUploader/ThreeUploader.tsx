@@ -52,7 +52,7 @@ export function ThreeTattoo({ imageURL }: { imageURL: string | null }) {
                 <directionalLight position={[5, 5, 5]} intensity={1} />
 
                 <ArmModel onMeshReady={setArmMesh} />
-
+                {/* TODO: DO UV PROJECTING AND IMPROVE FPS */}
                 {armMesh && imageURL && (
                     <DecalController
                         armMesh={armMesh}
