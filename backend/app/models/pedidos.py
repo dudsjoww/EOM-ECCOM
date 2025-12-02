@@ -34,7 +34,7 @@ class Pedido(Base):
     )
 
     status = Column(Enum(StatusPedido), default=StatusPedido.solicitado, nullable=False)
-
+    #TODO: Change this Agendamento_ID and sessao_id to model sessao.py, so it can have more sessao of the same pedido, therefore agendamento by sessao and not by pedidos
     agendamento_id = Column(Integer, ForeignKey("agendamentos.id"), nullable=True)
     sessao_id = Column(Integer, ForeignKey("sessao.id"), nullable=True)
 
