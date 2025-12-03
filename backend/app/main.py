@@ -10,9 +10,15 @@ from app.api import (
     routes_venda_consumivel,
     routes_orcamentos,
     routes_sessao,
+    routes_refresh_token,
 )
 
+from app.middleware.auth_middleware import AuthMiddleware
+
+
 app = FastAPI(title="Soyve Tattoo API")
+
+app.add_middleware(AuthMiddleware)
 
 app.include_router(routes_usuarios.router)
 app.include_router(routes_tatuadores.router)
@@ -24,3 +30,4 @@ app.include_router(routes_venda_consumivel.router)
 app.include_router(routes_pedidos.router)
 app.include_router(routes_orcamentos.router)
 app.include_router(routes_sessao.router)
+app.include_router(routes_refresh_token.router)
