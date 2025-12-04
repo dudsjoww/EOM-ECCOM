@@ -2,8 +2,29 @@ from logging.config import fileConfig
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
-
+from app.core.database import Base
 from alembic import context
+
+import os
+import sys
+import importlib
+
+# adiciona o caminho /backend ao sys.path
+sys.path.append(os.path.dirname(os.path.dirname(__file__)))
+
+# importa Base
+from app.core.database import Base
+
+# caminho para a pasta models
+models_path = os.path.join(os.path.dirname(__file__), "..", "app", "models")
+models_path = os.path.abspath(models_path)
+
+# importa automaticamente todos os .py dentro de models/
+for filename in os.listdir(models_path):
+    if filename.endswith(".py") and filename not in ["__init__.py"]:
+        module_name = f"app.models.{filename[:-3]}"
+        importlib.import_module(module_name)
+
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.
@@ -18,7 +39,7 @@ if config.config_file_name is not None:
 # for 'autogenerate' support
 # from myapp import mymodel
 # target_metadata = mymodel.Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -64,9 +85,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
