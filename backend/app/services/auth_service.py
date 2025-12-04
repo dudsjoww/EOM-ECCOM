@@ -152,7 +152,7 @@ class AuthService:
             settings.SECRET_KEY,
             algorithms=[settings.ALGORITHM],
         )
-
+        #TODO: Testar um raise pra validar se está retornando o payload, e se tem o SUB
         user_id = payload.get("sub")
         if not user_id:
             raise HTTPException(401, "Token sem subject")
