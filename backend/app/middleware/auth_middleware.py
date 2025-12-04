@@ -7,24 +7,26 @@ from sqlalchemy.orm import Session
 
 class AuthMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
-        # Rotas públicas não precisam validar
-        public_paths = ["/auth/login", "/auth/refresh", "/auth/google"]
-        if request.url.path in public_paths:
+        public_paths = [
+            "/auth/login",
+            "/auth/refresh",
+            "/auth/google",
+            "/usuarios",  # <- rota pública para criação
+        ]
+
+        # Rota pública? deixa passar
+        if any(request.url.path.startswith(path) for path in public_paths):
             return await call_next(request)
 
-        # Pega o token do header
-        token = request.headers.get("Authorization")
-        if not token:
-            raise HTTPException(status_code=401, detail="Token ausente")
+        # Pegar Bearer Token
+        auth_header = request.headers.get("Authorization")
+        if not auth_header or not auth_header.startswith("Bearer "):
+            raise HTTPException(status_code=401, detail="Token ausente" + auth_header)
 
-        token = token.replace("Bearer ", "")
+        token = auth_header.replace("Bearer ", "")
 
-        # Valida
-        try:
-            # Abre sessão do DB
-            db: Session = next(get_db())
-            AuthService.check_access_token(token, db)
-        except Exception:
-            raise HTTPException(status_code=401, detail="Token inválido ou expirado")
+        # Validação do token
+        db: Session = next(get_db())
+        AuthService.check_access_token(token, db)
 
         return await call_next(request)

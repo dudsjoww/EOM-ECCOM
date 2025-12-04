@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from jose import jwt
+from jose.exceptions import JWTError
 import uuid
 
 from app.models.user import User
@@ -139,3 +140,31 @@ class AuthService:
 
         self.db.commit()
         return {"detail": "Todas as sessões foram encerradas"}
+
+    # -------------------------
+    # 8. Checar access token (middleware)
+    @staticmethod
+    def check_access_token(token: str, db: Session):
+        # try:
+        # Decodifica o JWT
+        payload = jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+        )
+
+        user_id = payload.get("sub")
+        if not user_id:
+            raise HTTPException(401, "Token sem subject")
+
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(401, "Usuário não encontrado")
+
+        if not user.ativo:
+            raise HTTPException(403, "Usuário desativado")
+
+        return user
+
+    # except JWTError:
+    #    raise HTTPException(401, "Token inválido ou expirado")

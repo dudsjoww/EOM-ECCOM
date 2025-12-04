@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
+from app.security import hash_password
 
 router = APIRouter(prefix="/usuarios", tags=["Usuários"])
 
@@ -13,10 +14,11 @@ def criar_usuario(usuario: UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="E-mail já cadastrado")
 
+    senha_hash = hash_password(usuario.senha)
     novo_user = User(
         nome=usuario.nome,
         email=usuario.email,
-        senha_hash=usuario.senha_hash,  # ideal: hashear depois
+        senha_hash=senha_hash,  # ideal: hashear depois
         ativo=usuario.ativo,
     )
     db.add(novo_user)

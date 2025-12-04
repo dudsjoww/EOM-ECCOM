@@ -3,12 +3,13 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from jose import jwt
 from passlib.context import CryptContext
+from app.core.config import settings
 
 from app.core.database import get_db
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
 
-from app.schemas.auth_schemas import (
+from app.schemas.auth import (
     SchemaLogin,
     SchemaTokenResponse,
     SchemaRefreshToken,
@@ -17,8 +18,8 @@ from app.schemas.auth_schemas import (
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-SECRET_KEY = "SECRET_KEY"  # troque por .env
-ALGORITHM = "HS256"
+SECRET_KEY = settings.SECRET_KEY  # troque por .env
+ALGORITHM = settings.ALGORITHM  # troque por .env
 
 pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -37,7 +38,7 @@ def create_refresh_token():
 
 @router.post("/login", response_model=SchemaTokenResponse)
 def login(payload: SchemaLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.username).first()
+    user = db.query(User).filter(User.email == payload.email).first()
 
     if not user or not pwd.verify(payload.password, user.senha_hash):
         raise HTTPException(status_code=401, detail="Credenciais inválidas")
@@ -48,38 +49,15 @@ def login(payload: SchemaLogin, db: Session = Depends(get_db)):
     # Criar refresh token
     refresh_token_str = create_refresh_token()
 
+    if payload.remember_me:
+        expiracao_days = 30
+    else:
+        expiracao_days = 7
     refresh = RefreshToken(
         user_id=user.id,
         token=refresh_token_str,
-        expiracao=datetime.utcnow() + timedelta(days=7),
-        remember_me=False,
-    )
-
-    db.add(refresh)
-    db.commit()
-
-    return SchemaTokenResponse(
-        access_token=access_token,
-        refresh_token=refresh_token_str,
-    )
-
-
-@router.post("/login/remember", response_model=SchemaTokenResponse)
-def login_remember(payload: SchemaLogin, db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == payload.username).first()
-
-    if not user or not pwd.verify(payload.password, user.senha_hash):
-        raise HTTPException(status_code=401, detail="Credenciais inválidas")
-
-    access_token = create_access_token({"sub": str(user.id)}, expires_minutes=30)
-
-    refresh_token_str = create_refresh_token()
-
-    refresh = RefreshToken(
-        user_id=user.id,
-        token=refresh_token_str,
-        expiracao=datetime.utcnow() + timedelta(days=30),
-        remember_me=True,
+        expiracao=datetime.utcnow() + timedelta(days=expiracao_days),
+        remember_me=payload.remember_me,
     )
 
     db.add(refresh)
@@ -120,6 +98,7 @@ def refresh_token(payload: SchemaRefreshToken, db: Session = Depends(get_db)):
     return SchemaRefreshTokenResponse(access_token=access)
 
 
+# TODO: Problema ao fazer logout, o token não é revogado, revisar
 @router.post("/logout")
 def logout(payload: SchemaRefreshToken, db: Session = Depends(get_db)):
     token_db = (

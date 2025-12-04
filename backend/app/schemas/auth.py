@@ -4,8 +4,9 @@ from typing import Optional
 
 # Schema para login
 class SchemaLogin(BaseModel):
-    username: str
+    email: str
     password: str
+    remember_me: Optional[bool] = False
 
 
 # Schema para resposta de token
