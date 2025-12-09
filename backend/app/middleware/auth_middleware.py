@@ -11,7 +11,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
             "/auth/login",
             "/auth/refresh",
             "/auth/google",
-            "/usuarios",  # <- rota pública para criação
+            "/usuarios/",  # <- rota pública para criação
         ]
 
         # Rota pública? deixa passar
@@ -21,7 +21,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
         # Pegar Bearer Token
         auth_header = request.headers.get("Authorization")
         if not auth_header or not auth_header.startswith("Bearer "):
-            raise HTTPException(status_code=401, detail="Token ausente" + auth_header)
+            raise HTTPException(status_code=401, detail="Token ausente")
 
         token = auth_header.replace("Bearer ", "")
 

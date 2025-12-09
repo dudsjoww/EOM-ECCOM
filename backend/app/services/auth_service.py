@@ -2,13 +2,13 @@ from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from jose import jwt
-from jose.exceptions import JWTError
+from jose.exceptions import JWTError, ExpiredSignatureError
 import uuid
 
 from app.models.user import User
 from app.models.refresh_token import RefreshToken
 from app.core.config import settings
-from app.security import verify_password, hash_password, create_access_token
+from app.security import verify_password, create_access_token
 
 
 class AuthService:
@@ -48,7 +48,7 @@ class AuthService:
         refresh = RefreshToken(
             user_id=user_id,
             token=token_str,
-            expiracao=datetime.utcnow() + timedelta(days=duration),
+            expiracao=datetime.now() + timedelta(days=duration),
             remember_me=remember,
             valido=True,
         )
@@ -63,14 +63,13 @@ class AuthService:
     # 3. Login completo
     # -------------------------
     def login(self, email: str, password: str, remember: bool):
-        user = self.authenticate(email, password)
 
+        user = self.authenticate(email, password)
+        refresh = self.create_refresh(user.id, remember)
         access = create_access_token(
-            data={"sub": str(user.id)},
+            data={"sub": str(user.id), "ref": int(refresh.id)},
             expires_delta=timedelta(minutes=self.ACCESS_EXPIRE_MIN),
         )
-
-        refresh = self.create_refresh(user.id, remember)
 
         return {
             "access_token": access,
@@ -81,17 +80,17 @@ class AuthService:
     # -------------------------
     # 4. Validar refresh token
     # -------------------------
-    def validate_refresh(self, refresh_token: str) -> RefreshToken:
+    def validate_refresh(self, refresh_token_id: int):
         token = (
             self.db.query(RefreshToken)
-            .filter(RefreshToken.token == refresh_token, RefreshToken.valido == True)
+            .filter(RefreshToken.id == refresh_token_id, RefreshToken.valido)
             .first()
         )
 
         if not token:
             raise HTTPException(401, "Refresh token inválido ou revogado")
 
-        if token.expiracao < datetime.utcnow():
+        if token.expiracao < datetime.now():
             token.valido = False
             self.db.commit()
             raise HTTPException(401, "Refresh token expirado")
@@ -101,11 +100,10 @@ class AuthService:
     # -------------------------
     # 5. Gerar novo access token
     # -------------------------
-    def rotate_access(self, refresh_token: str):
-        token = self.validate_refresh(refresh_token)
+    def rotate_access(self, refresh_token: RefreshToken):
 
         new_access = create_access_token(
-            data={"sub": str(token.user_id)},
+            data={"sub": str(refresh_token.user_id), "ref": int(refresh_token.id)},
             expires_delta=timedelta(minutes=self.ACCESS_EXPIRE_MIN),
         )
 
@@ -117,7 +115,7 @@ class AuthService:
     def logout(self, refresh_token: str):
         token = (
             self.db.query(RefreshToken)
-            .filter(RefreshToken.token == refresh_token, RefreshToken.valido == True)
+            .filter(RefreshToken.token == refresh_token, RefreshToken.valido)
             .first()
         )
 
@@ -143,28 +141,42 @@ class AuthService:
 
     # -------------------------
     # 8. Checar access token (middleware)
-    @staticmethod
-    def check_access_token(token: str, db: Session):
-        # try:
-        # Decodifica o JWT
-        payload = jwt.decode(
-            token,
-            settings.SECRET_KEY,
-            algorithms=[settings.ALGORITHM],
-        )
-        #TODO: Testar um raise pra validar se está retornando o payload, e se tem o SUB
-        user_id = payload.get("sub")
-        if not user_id:
-            raise HTTPException(401, "Token sem subject")
+    def check_access_token(self, token: str, db: Session):
+        try:
+            # Decodifica o JWT
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+            )
 
-        user = db.query(User).filter(User.id == user_id).first()
-        if not user:
-            raise HTTPException(401, "Usuário não encontrado")
+            user_id = payload.get("sub")
+            ref_id = payload.get("ref")
+            if not user_id or not ref_id:
+                raise HTTPException(401, "Token inválido")
 
-        if not user.ativo:
-            raise HTTPException(403, "Usuário desativado")
+            user = db.query(User).filter(User.id == user_id).first()
+            if not user:
+                raise HTTPException(401, "Usuário não encontrado")
 
-        return user
+            if not user.ativo:
+                raise HTTPException(403, "Usuário desativado")
 
-    # except JWTError:
-    #    raise HTTPException(401, "Token inválido ou expirado")
+            return user
+
+        except ExpiredSignatureError:
+            payload = jwt.decode(
+                token,
+                settings.SECRET_KEY,
+                algorithms=[settings.ALGORITHM],
+                options={"verify_exp": False},
+            )
+            ref_id = payload.get("ref")
+            user_id = payload.get("sub")
+
+            token = self.validate_refresh(ref_id)
+            if token:
+                return self.rotate_access(token)
+            else:
+                raise HTTPException(401, "Token Refresh não encontrado")
+
+        except JWTError:
+            raise HTTPException(401, "Token inválido ou expirado")
