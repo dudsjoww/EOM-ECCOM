@@ -12,7 +12,7 @@ from app.schemas.auth import (
     SchemaLogin,
     SchemaTokenResponse,
     SchemaRefreshToken,
-    SchemaRefreshTokenResponse,
+    # SchemaRefreshTokenResponse,
 )
 
 router = APIRouter(prefix="/auth", tags=["Auth"])
@@ -25,25 +25,23 @@ def loginRoute(payload: SchemaLogin, db: Session = Depends(get_db)):
     auth = AuthService(db)
 
     tokens = auth.login(payload.email, payload.password, payload.remember_me)
-
+    print(tokens)
     return SchemaTokenResponse(
-        access_token=tokens.access_token,
-        refresh_token=tokens.refresh_token,
-        token_type=tokens.token_type,
+        access_token=tokens["access_token"],
+        refresh_token=tokens["refresh_token"],
+        token_type=tokens["token_type"],
     )
 
 
 @router.post("/logout")
-def logout(payload: SchemaRefreshToken, db: Session = Depends(get_db)):
-    token_db = (
-        db.query(RefreshToken)
-        .filter(RefreshToken.token == payload.refresh_token)
-        .first()
-    )
-
-    if token_db:
-        token_db.valido = False
-        db.commit()
+def logout(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db),
+):
+    token = credentials.credentials
+    auth = AuthService(db)
+    print(token)
+    auth.logout(token)
 
     return {"detail": "Logout realizado com sucesso"}
 
@@ -56,5 +54,5 @@ def me(
     token = credentials.credentials
     auth = AuthService(db)
     user = auth.check_access_token(token)
-
-    return {"id": user.id, "nome": user.nome, "email": user.email}
+    return user
+    # return {"id": user.id, "nome": user.nome, "email": user.email}

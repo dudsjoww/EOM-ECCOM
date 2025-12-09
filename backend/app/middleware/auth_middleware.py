@@ -27,6 +27,7 @@ class AuthMiddleware(BaseHTTPMiddleware):
 
         # Validação do token
         db: Session = next(get_db())
-        AuthService.check_access_token(token, db)
+        auth = AuthService(db)
+        auth.check_access_token(token)
 
         return await call_next(request)

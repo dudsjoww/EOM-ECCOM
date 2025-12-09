@@ -66,13 +66,13 @@ class AuthService:
 
         user = self.authenticate(email, password)
         refresh = self.create_refresh(user.id, remember)
-        access = create_access_token(
+        access_token = create_access_token(
             data={"sub": str(user.id), "ref": int(refresh.id)},
             expires_delta=timedelta(minutes=self.ACCESS_EXPIRE_MIN),
         )
 
         return {
-            "access_token": access,
+            "access_token": access_token,
             "refresh_token": refresh.token,
             "token_type": "bearer",
         }
@@ -112,10 +112,14 @@ class AuthService:
     # -------------------------
     # 6. Logout → revoga refresh
     # -------------------------
-    def logout(self, refresh_token: str):
+    def logout(self, token):
+
+        decodedToken = self.decodeJWT(token)
+        ref_id = decodedToken.get("ref")
+
         token = (
             self.db.query(RefreshToken)
-            .filter(RefreshToken.token == refresh_token, RefreshToken.valido)
+            .filter(RefreshToken.id == ref_id and RefreshToken.valido)
             .first()
         )
 
@@ -139,21 +143,28 @@ class AuthService:
         self.db.commit()
         return {"detail": "Todas as sessões foram encerradas"}
 
+    def decodeJWT(self, token, verify=True):
+        return jwt.decode(
+            token,
+            settings.SECRET_KEY,
+            algorithms=[settings.ALGORITHM],
+            options={"verify_exp": verify},
+        )
+
     # -------------------------
     # 8. Checar access token (middleware)
-    def check_access_token(self, token: str, db: Session):
+
+    def check_access_token(self, token: str):
         try:
             # Decodifica o JWT
-            payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
-            )
+            access_token = self.decodeJWT(token, True)
 
-            user_id = payload.get("sub")
-            ref_id = payload.get("ref")
+            user_id = access_token.get("sub")
+            ref_id = access_token.get("ref")
             if not user_id or not ref_id:
                 raise HTTPException(401, "Token inválido")
 
-            user = db.query(User).filter(User.id == user_id).first()
+            user = self.db.query(User).filter(User.id == user_id).first()
             if not user:
                 raise HTTPException(401, "Usuário não encontrado")
 
@@ -163,20 +174,17 @@ class AuthService:
             return user
 
         except ExpiredSignatureError:
-            payload = jwt.decode(
-                token,
-                settings.SECRET_KEY,
-                algorithms=[settings.ALGORITHM],
-                options={"verify_exp": False},
-            )
+            payload = self.decodeJWT(token, False)
             ref_id = payload.get("ref")
             user_id = payload.get("sub")
 
             token = self.validate_refresh(ref_id)
             if token:
-                return self.rotate_access(token)
+                newToken = self.rotate_access(token)
+                return newToken
+                # TODO: Fazer uma função retroativo após fazer o navegador receber o header automáticamente
             else:
                 raise HTTPException(401, "Token Refresh não encontrado")
 
         except JWTError:
-            raise HTTPException(401, "Token inválido ou expirado")
+            raise HTTPException(401, "Token inválido ou expirado teste")
