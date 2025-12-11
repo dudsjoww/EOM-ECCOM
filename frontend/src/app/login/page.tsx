@@ -21,7 +21,7 @@ export default function LoginPage() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-neutral-900 text-white">
       <LoginForm />
-      <RegisterForm />
+      {/* <RegisterForm /> */}
     </main>
   )
 }
