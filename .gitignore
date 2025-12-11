@@ -1,4 +1,4 @@
 backend/.env
-
+backend/alembic/versions/
 __pycache__/
 *.pyc
