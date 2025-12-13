@@ -6,6 +6,7 @@ from jose.exceptions import JWTError, ExpiredSignatureError
 import uuid
 
 from app.models.user import User
+from app.models.tatuador import Tatuador
 from app.models.refresh_token import RefreshToken
 from app.core.config import settings
 from app.security import verify_password, create_access_token
@@ -63,7 +64,6 @@ class AuthService:
     # 3. Login completo
     # -------------------------
     def login(self, email: str, password: str, remember: bool):
-
         user = self.authenticate(email, password)
         refresh = self.create_refresh(user.id, remember)
         access_token = create_access_token(
@@ -101,9 +101,13 @@ class AuthService:
     # 5. Gerar novo access token
     # -------------------------
     def rotate_access(self, refresh_token: RefreshToken):
-
+        role = self.identify_role(refresh_token.user_id)
         new_access = create_access_token(
-            data={"sub": str(refresh_token.user_id), "ref": int(refresh_token.id)},
+            data={
+                "sub": str(refresh_token.user_id),
+                "ref": int(refresh_token.id),
+                "role": str(role),
+            },
             expires_delta=timedelta(minutes=self.ACCESS_EXPIRE_MIN),
         )
 
@@ -113,7 +117,6 @@ class AuthService:
     # 6. Logout → revoga refresh
     # -------------------------
     def logout(self, token):
-
         decodedToken = self.decodeJWT(token)
         ref_id = decodedToken.get("ref")
 
@@ -160,23 +163,21 @@ class AuthService:
             access_token = self.decodeJWT(token, True)
 
             user_id = access_token.get("sub")
+            self.validate_user(user_id)
             ref_id = access_token.get("ref")
+
+            refresh_token = self.validate_refresh(ref_id)
             if not user_id or not ref_id:
                 raise HTTPException(401, "Token inválido")
-
-            user = self.db.query(User).filter(User.id == user_id).first()
-            if not user:
-                raise HTTPException(401, "Usuário não encontrado")
-
-            if not user.ativo:
-                raise HTTPException(403, "Usuário desativado")
-
-            return user
+            newToken = self.rotate_access(refresh_token)
+            return newToken
 
         except ExpiredSignatureError:
             payload = self.decodeJWT(token, False)
             ref_id = payload.get("ref")
             user_id = payload.get("sub")
+
+            self.validate_user(user_id)
 
             token = self.validate_refresh(ref_id)
             if token:
@@ -188,3 +189,32 @@ class AuthService:
 
         except JWTError:
             raise HTTPException(401, "Token inválido ou expirado teste")
+
+    def identify_role(self, user_id: int) -> str:
+        user = self.validate_user(user_id)
+        worker = self.validate_worker(user_id)
+
+        if worker.admin:
+            return "admin"
+        elif worker:
+            return "artist"
+        elif user:
+            return "client"
+
+    def validate_user(self, user_id: int) -> User:
+        user = self.db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise HTTPException(401, "Usuário não encontrado")
+
+        if not user.ativo:
+            raise HTTPException(403, "Usuário desativado")
+        return user
+
+    def validate_worker(self, user_id: int) -> User:
+        worker = self.db.query(Tatuador).filter(Tatuador.user_id == user_id).first()
+
+        if not worker:
+            raise HTTPException(401, "Tatuador não encontrado")
+        elif not worker.ativo:
+            raise HTTPException(403, "Tatuador desativado")
+        return worker

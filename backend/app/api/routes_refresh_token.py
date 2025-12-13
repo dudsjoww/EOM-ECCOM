@@ -21,7 +21,6 @@ security = HTTPBearer()
 
 @router.post("/login", response_model=SchemaTokenResponse)
 def loginRoute(payload: SchemaLogin, db: Session = Depends(get_db)):
-
     auth = AuthService(db)
 
     tokens = auth.login(payload.email, payload.password, payload.remember_me)
@@ -53,6 +52,8 @@ def me(
 ):
     token = credentials.credentials
     auth = AuthService(db)
-    user = auth.check_access_token(token)
+    Decodedtoken = auth.decodeJWT(token)
+    user_id = Decodedtoken.get("sub")
+    user = auth.validate_user(user_id)
     return user
     # return {"id": user.id, "nome": user.nome, "email": user.email}
